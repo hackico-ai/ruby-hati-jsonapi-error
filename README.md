@@ -11,7 +11,7 @@ Transform messy error handling into elegant, consistent JSON:API responses. Buil
 ## ✨ Features
 
 - **JSON:API Compliant** - Follows the official [JSON:API error specification](https://jsonapi.org/format/#errors)
-- **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511)
+- **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511) [Built-in Classes Reference](HTTP_STATUS_CODES.md)
 - **Customizable Attributes** - Support for `id`, `code`, `title`, `detail`, `status`, `meta`, `links`, `source`
 - **Error Registry** - Map custom exceptions to standardized responses
 - **Fallback Handling** - Graceful handling of unexpected errors
@@ -219,53 +219,33 @@ render json: resolver.to_json, status: resolver.status
 
 ## 📚 Available Error Classes
 
-All standard HTTP error status codes are available:
+**[📋 Built-in Error Classrs: see full HTTP Status Codes Reference Table](HTTP_STATUS_CODES.md)**
 
-### Client Errors (4xx)
+All standard HTTP error status codes are available. For a complete reference with class names, codes, and messages, see the **[📋 Full list](HTTP_STATUS_CODES.md)**.
 
-- `BadRequest` (400)
-- `Unauthorized` (401)
-- `PaymentRequired` (402)
-- `Forbidden` (403)
-- `NotFound` (404)
-- `MethodNotAllowed` (405)
-- `NotAcceptable` (406)
-- `ProxyAuthenticationRequired` (407)
-- `RequestTimeout` (408)
-- `Conflict` (409)
-- `Gone` (410)
-- `LengthRequired` (411)
-- `PreconditionFailed` (412)
-- `RequestEntityTooLarge` (413)
-- `RequestUriTooLong` (414)
-- `UnsupportedMediaType` (415)
-- `RequestedRangeNotSatisfiable` (416)
-- `ExpectationFailed` (417)
-- `MisdirectedRequest` (421)
-- `UnprocessableEntity` (422)
-- `Locked` (423)
-- `FailedDependency` (424)
-- `TooEarly` (425)
-- `UpgradeRequired` (426)
-- `PreconditionRequired` (428)
-- `TooManyRequests` (429)
-- `RequestHeaderFieldsTooLarge` (431)
-- `UnavailableForLegalReasons` (451)
+### Quick Reference
 
-### Server Errors (5xx)
+**Most Common Client Errors (4xx):**
 
-- `InternalServerError` (500)
-- `NotImplemented` (501)
-- `BadGateway` (502)
-- `ServiceUnavailable` (503)
-- `GatewayTimeout` (504)
-- `HttpVersionNotSupported` (505)
-- `VariantAlsoNegotiates` (506)
-- `InsufficientStorage` (507)
-- `LoopDetected` (508)
-- `BandwidthLimitExceeded` (509)
-- `NotExtended` (510)
-- `NetworkAuthenticationRequired` (511)
+| Status | Class                 | Description             |
+| ------ | --------------------- | ----------------------- |
+| 400    | `BadRequest`          | Invalid request syntax  |
+| 401    | `Unauthorized`        | Authentication required |
+| 403    | `Forbidden`           | Access denied           |
+| 404    | `NotFound`            | Resource not found      |
+| 422    | `UnprocessableEntity` | Validation errors       |
+| 429    | `TooManyRequests`     | Rate limit exceeded     |
+
+**Most Common Server Errors (5xx):**
+
+| Status | Class                 | Description                     |
+| ------ | --------------------- | ------------------------------- |
+| 500    | `InternalServerError` | Server error                    |
+| 502    | `BadGateway`          | Invalid response from upstream  |
+| 503    | `ServiceUnavailable`  | Service temporarily unavailable |
+| 504    | `GatewayTimeout`      | Upstream timeout                |
+
+**💡 Total Coverage:** 39 HTTP status codes (400-451, 500-511)
 
 ## 🧪 Testing
 
