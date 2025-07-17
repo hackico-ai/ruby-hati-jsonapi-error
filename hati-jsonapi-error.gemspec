@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'hati_jsonapi_error/version'
 
 Gem::Specification.new do |spec|
-  spec.name    = 'jsonapi-error'
+  spec.name    = 'hati-jsonapi-error'
   spec.version = HatiJsonapiError::VERSION
   spec.authors = ['Marie Giy', 'Yuri Gi']
   spec.email   = %w[giy.mariya@gmail.com yurigi.pro@gmail.com]

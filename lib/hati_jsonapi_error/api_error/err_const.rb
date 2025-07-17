@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module HatiJsonapiError
-  module API_ERROR
+  module ApiError
     # rubocop:disable Layout/LineLength
     CLIENT = {
       400 => { name: 'BadRequest',                   code: :bad_request,                     message: 'Bad Request'                      },
