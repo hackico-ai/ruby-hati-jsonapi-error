@@ -7,7 +7,9 @@ gemspec
 gem 'rake'
 
 # Spec
+gem 'json'
 gem 'rspec', '~> 3.0'
+gem 'rspec-collection_matchers'
 
 # Linter & Static
 gem 'fasterer', '~> 0.11.0'

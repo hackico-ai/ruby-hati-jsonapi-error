@@ -2,6 +2,8 @@
 
 require 'bundler/setup'
 require 'hati_jsonapi_error'
+require 'json'
+require 'rspec/collection_matchers'
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = '.rspec_status'
