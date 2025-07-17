@@ -10,13 +10,13 @@ Transform messy error handling into elegant, consistent JSON:API responses. Buil
 
 ## ✨ Features
 
-- 🎯 **JSON:API Compliant** - Follows the official [JSON:API error specification](https://jsonapi.org/format/#errors)
-- 🔧 **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511)
-- 🎨 **Customizable Attributes** - Support for `id`, `code`, `title`, `detail`, `status`, `meta`, `links`, `source`
-- 🗂️ **Error Registry** - Map custom exceptions to standardized responses
-- 🛡️ **Fallback Handling** - Graceful handling of unexpected errors
-- 📦 **Zero Dependencies** - Lightweight and fast
-- 🔌 **Framework Agnostic** - Works with Rails, Sinatra, or any Ruby web framework
+- **JSON:API Compliant** - Follows the official [JSON:API error specification](https://jsonapi.org/format/#errors)
+- **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511)
+- **Customizable Attributes** - Support for `id`, `code`, `title`, `detail`, `status`, `meta`, `links`, `source`
+- **Error Registry** - Map custom exceptions to standardized responses
+- **Fallback Handling** - Graceful handling of unexpected errors
+- **Zero Dependencies** - Lightweight and fast
+- **Framework Agnostic** - Works with Rails, Sinatra, or any Ruby web framework
 
 ## 📦 Installation
 
@@ -43,6 +43,7 @@ $ gem install hati-jsonapi-error
 ### 1. Load Error Classes
 
 ```ruby
+# config/hati_jsonapi_error.rb
 require 'hati_jsonapi_error'
 
 # Load all HTTP status error classes
@@ -60,10 +61,14 @@ raise HatiJsonapiError::BadRequest.new
 raise HatiJsonapiError::InternalServerError.new
 
 # Access by status code or symbol
-ApiErr = HatiJsonapiError::Helpers::ApiErr.new
-raise ApiErr[404]          # => HatiJsonapiError::NotFound
-raise ApiErr[:not_found]   # => HatiJsonapiError::NotFound
-raise ApiErr[422]          # => HatiJsonapiError::UnprocessableEntity
+JsonapiError = HatiJsonapiError::Helpers::ApiErr.new
+raise JsonapiError[404]          # => HatiJsonapiError::NotFound
+raise JsonapiError[:not_found]   # => HatiJsonapiError::NotFound
+raise JsonapiError[422]          # => HatiJsonapiError::UnprocessableEntity
+
+# NOTE: if namespacing is too verbosy - aliases are nice tricks (scoped preferably)
+Error = HatiJsonapiError
+raise Error::NotFound.new
 ```
 
 ### 3. Custom Error Attributes
@@ -137,10 +142,14 @@ end
 
 class UsersController < ApiController
   def show
-    user = User.find(params[:id])  # Raises ActiveRecord::RecordNotFound
-    render json: user
+    # Raises ActiveRecord::RecordNotFound and caught in rescue_from
+    user = User.find(params[:id])
+
+    render json: user, status: :ok
   rescue ActiveRecord::RecordInvalid => e
-    render_error(HatiJsonapiError::UnprocessableEntity, status: 422)
+    log_error(e)
+
+   render_error HatiJsonapiError::UnprocessableEntity
   end
 end
 ```
@@ -149,18 +158,20 @@ end
 
 ### Functional Programming Style
 
-Perfect for functional programming patterns:
+Perfect for functional programming patterns [SEE hati-operation gem](https://github.com/hackico-ai/ruby-hati-operation):
 
 ```ruby
-class UserOperation
-  ApiErr = HatiJsonapiError::Helpers::ApiErr.new
+require 'hati_operation'
+
+class Api::User::CreateOperation < BaseOperation
+  Err = HatiJsonapiError::Helpers::ApiErr.new
 
   def call(params)
-    user_params = step validate_params(params),     err: ApiErr[422]
-    user        = step create_user(user_params),    err: ApiErr[409]
-    profile     = step create_profile(user),        err: ApiErr[503]
+    user_params = step validate_params(params), err: Err[422]
+    user = step create_user(user_params),       err: Err[409]
+    profile = step create_profile(user),        err: Err[503]
 
-    Success(user: user, profile: profile)
+    Success(profile)
   end
 end
 ```
