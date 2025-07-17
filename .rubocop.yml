@@ -5,3 +5,11 @@ require:
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.0
+
+Metrics/MethodLength:
+  Max: 15
+  Enabled: false
+
+Metrics/ClassLength:
+  Max: 100
+  Enabled: false

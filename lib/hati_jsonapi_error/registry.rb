@@ -1,16 +1,15 @@
 # frozen_string_literal: true
 
 module HatiJsonapiError
+  # This class is used to register errors and provide a fallback error.
   class Registry
     class << self
-      attr_writer :fallback
+      def fallback=(err)
+        @fallback = loaded_error?(err) ? err : fetch_error(err)
+      end
 
       def fallback
         @fallback ||= nil
-      end
-
-      def error_map
-        @error_map ||= {}
       end
 
       # Base.loaded? # => true
@@ -19,20 +18,34 @@ module HatiJsonapiError
       #   ActiveRecord::RecordInvalid  => 422
       # }
       def error_map=(error_map)
-        error_map.each do |_error, mapped_error|
-          next if mapped_error < Base
+        error_map.each do |error, mapped_error|
+          next if loaded_error?(mapped_error)
 
-          err = Base.fetch_err(mapped_error)
-          raise "Error #{mapped_error} not found" unless err
-
-          error_map[error] = err
+          error_map[error] = fetch_error(mapped_error)
         end
 
         @error_map = error_map
       end
 
+      def error_map
+        @error_map ||= {}
+      end
+
       def lookup_error(error)
         error_map[error.class] || fallback
+      end
+
+      private
+
+      def loaded_error?(error)
+        error.is_a?(Class) && error <= HatiJsonapiError::BaseError
+      end
+
+      def fetch_error(error)
+        err = HatiJsonapiError::Kigen.fetch_err(error)
+        raise "Error #{error} definition not found in lib/hati_jsonapi_error/api_error/error_const.rb" unless err
+
+        err
       end
     end
   end

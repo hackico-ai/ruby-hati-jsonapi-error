@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module HatiJsonapiError
+  # This class is used to resolve errors and serialize them to a JSON API format.
   class Resolver
     attr_reader :errors, :serializer
 

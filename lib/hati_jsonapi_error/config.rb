@@ -21,20 +21,21 @@ module HatiJsonapiError
         yield self if block_given?
       end
 
-      def use_unexpected=(fallback)
-        Registry.fallback = fallback
+      def use_unexpected=(fallback_error)
+        HatiJsonapiError::Registry.fallback = fallback_error
       end
 
       def map_errors=(error_map)
-        Registry.error_map = error_map
+        HatiJsonapiError::Registry.error_map = error_map
       end
 
       def error_map
-        Registry.map
+        HatiJsonapiError::Registry.error_map
       end
 
+      # TODO: check if double defintion of errors
       def load_errors!
-        Base.load_errors!
+        HatiJsonapiError::Kigen.load_errors!
       end
     end
   end

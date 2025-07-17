@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module HatiJsonapiError
+  # This class is used to serialize errors to a JSON API format.
   class PoroSerializer
     SHORT_KEYS = %i[status title detail source].freeze
 
