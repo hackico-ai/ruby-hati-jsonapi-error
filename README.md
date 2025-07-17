@@ -133,11 +133,7 @@ class ApiController < ApplicationController
 
   rescue_from StandardError, with: :handle_error
 
-  private
-
-  def handle_error(error)
-    render_error(error)
-  end
+  # ...
 end
 
 class UsersController < ApiController
