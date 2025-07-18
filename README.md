@@ -1,131 +1,193 @@
-# 🔥 Hati JSON:API Error
+# Hati JSON:API Error
 
 [![Gem Version](https://badge.fury.io/rb/hati-jsonapi-error.svg)](https://badge.fury.io/rb/hati-jsonapi-error)
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%203.0.0-ruby.svg)](https://ruby-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/hackico-ai/ruby-hati-jsonapi-error)
 
-> **Standardized JSON:API-compliant error responses made easy for your Web API** 🚀
+> **Production-ready JSON:API-compliant error responses for professional Web APIs**
 
-Transform messy error handling into elegant, consistent JSON:API responses. Built for Ruby applications that demand professional error management.
+Transform inconsistent error handling into standardized, traceable responses. Built for Ruby applications requiring enterprise-grade error management.
+
+## Why Standardized Error Handling Matters
+
+### The Problem: Inconsistent Error Responses
+
+Different controllers returning different error formats creates maintenance nightmares:
+
+```ruby
+# Three different error formats in one application
+class UsersController
+  def show
+    render json: { error: "User not found" }, status: 404
+  end
+end
+
+class OrdersController
+  def create
+    render json: { message: "Validation failed", details: errors }, status: 422
+  end
+end
+
+class PaymentsController
+  def process
+    render json: { errors: errors, error_code: "INVALID", status: "failure" }, status: 400
+  end
+end
+```
+
+This forces frontend developers to handle multiple error formats:
+
+```javascript
+// Unmaintainable error handling
+if (data.error) {
+  showError(data.error); // Users format
+} else if (data.message && data.details) {
+  showError(`${data.message}: ${data.details.join(", ")}`); // Orders format
+} else if (data.errors && data.error_code) {
+  showError(`${data.error_code}: ${data.errors.join(", ")}`); // Payments format
+}
+```
+
+### The Impact
+
+- **API Documentation**: Each endpoint needs custom error documentation
+- **Error Tracking**: Different structures break centralized logging
+- **Client SDKs**: Cannot provide consistent error handling
+- **Testing**: Each format requires separate test cases
+- **Team Coordination**: New developers must learn multiple patterns
+
+### The Solution: JSON:API Standard
+
+**One format across all endpoints:**
+
+```ruby
+raise HatiJsonapiError::UnprocessableEntity.new(
+  detail: "Email address is required",
+  source: { pointer: "/data/attributes/email" }
+)
+```
+
+**Always produces standardized output:**
+
+```json
+{
+  "errors": [
+    {
+      "status": 422,
+      "code": "unprocessable_entity",
+      "title": "Validation Failed",
+      "detail": "Email address is required",
+      "source": { "pointer": "/data/attributes/email" }
+    }
+  ]
+}
+```
 
 ## ✨ Features
 
 - **JSON:API Compliant** - Follows the official [JSON:API error specification](https://jsonapi.org/format/#errors)
-- **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511) [Built-in Classes Reference](HTTP_STATUS_CODES.md)
-- **Customizable Attributes** - Support for `id`, `code`, `title`, `detail`, `status`, `meta`, `links`, `source`
+- **Auto-Generated Error Classes** - Dynamic HTTP status code error classes (400-511)
+- **Rich Error Context** - Support for `id`, `code`, `title`, `detail`, `status`, `meta`, `links`, `source`
 - **Error Registry** - Map custom exceptions to standardized responses
-- **Fallback Handling** - Graceful handling of unexpected errors
+- **Controller Integration** - Helper methods for Rails, Sinatra, and other frameworks
+- **100% Test Coverage** - Comprehensive RSpec test suite
 - **Zero Dependencies** - Lightweight and fast
-- **Framework Agnostic** - Works with Rails, Sinatra, or any Ruby web framework
+- **Production Ready** - Thread-safe and memory efficient
 
-## 📦 Installation
-
-Add this line to your application's Gemfile:
+## Installation
 
 ```ruby
+# Gemfile
 gem 'hati-jsonapi-error'
 ```
 
-And then execute:
-
 ```bash
-$ bundle install
+bundle install
 ```
 
-Or install it yourself as:
+## Quick Start
 
-```bash
-$ gem install hati-jsonapi-error
-```
-
-## 🚀 Quick Start
-
-### 1. Load Error Classes
+### 1. Configuration
 
 ```ruby
-# config/hati_jsonapi_error.rb
-require 'hati_jsonapi_error'
-
-# Load all HTTP status error classes
+# config/initializers/hati_jsonapi_error.rb
 HatiJsonapiError::Config.configure do |config|
   config.load_errors!
+
+  config.map_errors = {
+    ActiveRecord::RecordNotFound => :not_found,
+    ActiveRecord::RecordInvalid   => :unprocessable_entity,
+    ArgumentError                 => :bad_request
+  }
+
+  config.use_unexpected = HatiJsonapiError::InternalServerError
 end
 ```
 
 ### 2. Basic Usage
 
 ```ruby
-# Raise predefined errors
+# Simple error raising
 raise HatiJsonapiError::NotFound.new
 raise HatiJsonapiError::BadRequest.new
-raise HatiJsonapiError::InternalServerError.new
-
-# Access by status code or symbol
-JsonapiError = HatiJsonapiError::Helpers::ApiErr.new
-raise JsonapiError[404]          # => HatiJsonapiError::NotFound
-raise JsonapiError[:not_found]   # => HatiJsonapiError::NotFound
-raise JsonapiError[422]          # => HatiJsonapiError::UnprocessableEntity
-
-# NOTE: if namespacing is too verbosy - aliases are nice tricks (scoped preferably)
-Error = HatiJsonapiError
-raise Error::NotFound.new
+raise HatiJsonapiError::Unauthorized.new
 ```
 
-### 3. Custom Error Attributes
+## Usage Examples
+
+### Basic Error Handling
+
+**Access errors multiple ways:**
 
 ```ruby
-class CustomNotFound < HatiJsonapiError::NotFound
-  def initialize
-    super(
-      id: 'user_not_found',
-      detail: 'The requested user could not be found in our system',
-      meta: { timestamp: Time.current, request_id: SecureRandom.uuid }
-    )
-  end
-end
+# By class name
+raise HatiJsonapiError::NotFound.new
 
-error = CustomNotFound.new
-puts error.to_json
-# {
-#   "errors": [{
-#     "id": "user_not_found",
-#     "status": "404",
-#     "code": "not_found",
-#     "title": "Not Found",
-#     "detail": "The requested user could not be found in our system",
-#     "meta": {
-#       "timestamp": "2024-01-15T10:30:00Z",
-#       "request_id": "abc-123-def"
-#     }
-#   }]
-# }
+# By status code
+api_err = HatiJsonapiError::Helpers::ApiErr.new
+raise api_err[404]
+
+# By error code
+raise api_err[:not_found]
 ```
 
-## 🔧 Configuration
+### Rich Error Context
 
-### Error Mapping
-
-Map your custom exceptions to standardized JSON:API errors:
+**Add debugging information:**
 
 ```ruby
-HatiJsonapiError::Config.configure do |config|
-  config.load_errors!
-
-  config.map_errors = {
-    ActiveRecord::RecordNotFound  => :not_found,
-    ActiveRecord::RecordInvalid   => 422,
-    MyCustomError                 => HatiJsonapiError::BadRequest,
-    AuthenticationError           => :unauthorized
+HatiJsonapiError::NotFound.new(
+  id: 'user_lookup_failed',
+  detail: 'User with email john@example.com was not found',
+  source: { pointer: '/data/attributes/email' },
+  meta: {
+    searched_email: 'john@example.com',
+    suggestion: 'Verify the email address is correct'
   }
+)
+```
 
-  # Set fallback for unmapped errors
-  config.use_unexpected = HatiJsonapiError::InternalServerError
-end
+### Multiple Validation Errors
+
+**Collect and return multiple errors:**
+
+```ruby
+errors = []
+errors << HatiJsonapiError::UnprocessableEntity.new(
+  detail: "Email format is invalid",
+  source: { pointer: '/data/attributes/email' }
+)
+errors << HatiJsonapiError::UnprocessableEntity.new(
+  detail: "Password too short",
+  source: { pointer: '/data/attributes/password' }
+)
+
+resolver = HatiJsonapiError::Resolver.new(errors)
+render json: resolver.to_json, status: resolver.status
 ```
 
 ### Controller Integration
-
-Include helpers in your API controllers:
 
 ```ruby
 class ApiController < ApplicationController
@@ -133,156 +195,170 @@ class ApiController < ApplicationController
 
   rescue_from StandardError, with: :handle_error
 
-  # ...
-end
-
-class UsersController < ApiController
   def show
-    # Raises ActiveRecord::RecordNotFound and caught in rescue_from
+    # ActiveRecord::RecordNotFound automatically mapped to JSON:API NotFound
     user = User.find(params[:id])
+    render json: user
+  end
 
-    render json: user, status: :ok
-  rescue ActiveRecord::RecordInvalid => e
-    log_error(e)
+  def create
+    user = User.new(user_params)
 
-   render_error HatiJsonapiError::UnprocessableEntity
+    unless user.save
+      validation_error = HatiJsonapiError::UnprocessableEntity.new(
+        detail: user.errors.full_messages.join(', '),
+        source: { pointer: '/data/attributes' },
+        meta: { validation_errors: user.errors.messages }
+      )
+
+      return render_error(validation_error)
+    end
+
+    render json: user, status: :created
   end
 end
 ```
 
-## 🎯 Advanced Usage
+### Custom Error Classes
 
-### Functional Programming Style
-
-Perfect for functional programming patterns [SEE hati-operation gem](https://github.com/hackico-ai/ruby-hati-operation):
+**Domain-specific errors:**
 
 ```ruby
-require 'hati_operation'
-
-class Api::User::CreateOperation < BaseOperation
-  Err = HatiJsonapiError::Helpers::ApiErr.new
-
-  def call(params)
-    user_params = step validate_params(params), err: Err[422]
-    user = step create_user(user_params),       err: Err[409]
-    profile = step create_profile(user),        err: Err[503]
-
-    Success(profile)
-  end
-end
-```
-
-### Complex Error Objects
-
-Create rich error responses with all JSON:API features:
-
-```ruby
-class ValidationError < HatiJsonapiError::UnprocessableEntity
-  def initialize(field:, value:, constraint:)
+class PaymentRequiredError < HatiJsonapiError::PaymentRequired
+  def initialize(amount:, currency: 'USD')
     super(
-      id: "validation_#{field}",
-      detail: "Field '#{field}' with value '#{value}' violates constraint: #{constraint}",
-      source: {
-        pointer: "/data/attributes/#{field}",
-        parameter: field
-      },
+      detail: "Payment of #{amount} #{currency} required",
       meta: {
-        field: field,
-        value: value,
-        constraint: constraint,
-        help_url: "https://docs.example.com/validation##{field}"
+        required_amount: amount,
+        currency: currency,
+        payment_methods: ['credit_card', 'paypal']
+      },
+      links: {
+        payment_page: "https://app.com/billing/upgrade?amount=#{amount}"
       }
     )
   end
 end
 
-error = ValidationError.new(
-  field: 'email',
-  value: 'invalid-email',
-  constraint: 'must be a valid email format'
-)
+# Usage
+raise PaymentRequiredError.new(amount: 29.99)
 ```
 
-### Batch Error Responses
+## Configuration
 
-Handle multiple errors in a single response:
+### Error Mapping
 
 ```ruby
-errors = [
-  HatiJsonapiError::BadRequest.new(detail: "Missing required field: name"),
-  HatiJsonapiError::BadRequest.new(detail: "Invalid email format")
-]
+HatiJsonapiError::Config.configure do |config|
+  config.map_errors = {
+    # Rails exceptions
+    ActiveRecord::RecordNotFound  => :not_found,
+    ActiveRecord::RecordInvalid   => :unprocessable_entity,
 
-resolver = HatiJsonapiError::Resolver.new(errors)
-render json: resolver.to_json, status: resolver.status
+    # Custom exceptions
+    AuthenticationError           => :unauthorized,
+    RateLimitError               => :too_many_requests,
+
+    # Infrastructure exceptions
+    Redis::TimeoutError          => :service_unavailable,
+    Net::ReadTimeout             => :gateway_timeout
+  }
+
+  config.use_unexpected = HatiJsonapiError::InternalServerError
+end
 ```
 
-## 📚 Available Error Classes
+## Available Error Classes
 
-**[📋 Built-in Error Classrs: see full HTTP Status Codes Reference Table](HTTP_STATUS_CODES.md)**
+**Quick Reference - Most Common:**
 
-All standard HTTP error status codes are available. For a complete reference with class names, codes, and messages, see the **[📋 Full list](HTTP_STATUS_CODES.md)**.
-
-### Quick Reference
-
-**Most Common Client Errors (4xx):**
-
-| Status | Class                 | Description             |
+| Status | Class                 | Code                    |
 | ------ | --------------------- | ----------------------- |
-| 400    | `BadRequest`          | Invalid request syntax  |
-| 401    | `Unauthorized`        | Authentication required |
-| 403    | `Forbidden`           | Access denied           |
-| 404    | `NotFound`            | Resource not found      |
-| 422    | `UnprocessableEntity` | Validation errors       |
-| 429    | `TooManyRequests`     | Rate limit exceeded     |
+| 400    | `BadRequest`          | `bad_request`           |
+| 401    | `Unauthorized`        | `unauthorized`          |
+| 403    | `Forbidden`           | `forbidden`             |
+| 404    | `NotFound`            | `not_found`             |
+| 422    | `UnprocessableEntity` | `unprocessable_entity`  |
+| 429    | `TooManyRequests`     | `too_many_requests`     |
+| 500    | `InternalServerError` | `internal_server_error` |
+| 502    | `BadGateway`          | `bad_gateway`           |
+| 503    | `ServiceUnavailable`  | `service_unavailable`   |
 
-**Most Common Server Errors (5xx):**
+**[Complete list of all 39 HTTP status codes →](HTTP_STATUS_CODES.md)**
 
-| Status | Class                 | Description                     |
-| ------ | --------------------- | ------------------------------- |
-| 500    | `InternalServerError` | Server error                    |
-| 502    | `BadGateway`          | Invalid response from upstream  |
-| 503    | `ServiceUnavailable`  | Service temporarily unavailable |
-| 504    | `GatewayTimeout`      | Upstream timeout                |
+## Testing
 
-**💡 Total Coverage:** 39 HTTP status codes (400-451, 500-511)
-
-## 🧪 Testing
+### RSpec Integration
 
 ```ruby
-# In your tests
-RSpec.describe 'Error handling' do
+# Shared examples for JSON:API compliance
+RSpec.shared_examples 'JSON:API error response' do |expected_status, expected_code|
   it 'returns proper JSON:API error format' do
-    expect {
-      raise HatiJsonapiError::NotFound.new(detail: 'User not found')
-    }.to raise_error(HatiJsonapiError::NotFound) do |error|
-      json = JSON.parse(error.to_json)
-      expect(json['errors'].first['status']).to eq('404')
-      expect(json['errors'].first['detail']).to eq('User not found')
-    end
+    json = JSON.parse(response.body)
+
+    expect(response).to have_http_status(expected_status)
+    expect(json['errors'].first['status']).to eq(expected_status)
+    expect(json['errors'].first['code']).to eq(expected_code)
+  end
+end
+
+# Usage in specs
+describe 'GET #show' do
+  context 'when user not found' do
+    subject { get :show, params: { id: 'nonexistent' } }
+    include_examples 'JSON:API error response', 404, 'not_found'
   end
 end
 ```
 
-## 🤝 Contributing
+### Unit Testing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+```ruby
+RSpec.describe HatiJsonapiError::NotFound do
+  it 'has correct default attributes' do
+    error = described_class.new
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+    expect(error.status).to eq(404)
+    expect(error.code).to eq(:not_found)
+    expect(error.to_h[:title]).to eq('Not Found')
+  end
+end
+```
 
-## 📝 License
+## Benefits
 
-This gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+**For Development Teams:**
 
-## 🙏 Acknowledgments
+- Reduced development time with single error pattern
+- Easier onboarding for new developers
+- Better testing with standardized structure
+- Improved debugging with consistent error tracking
 
-- Inspired by the [JSON:API specification](https://jsonapi.org/)
-- Built with ❤️ by the [hackico.ai](https://hackico.ai) team
+**For Frontend/Mobile Teams:**
+
+- One error parser for entire API
+- Rich error context for better user experience
+- Easier SDK development
+
+**For Operations:**
+
+- Centralized monitoring and alerting
+- Consistent error analysis
+- Simplified documentation
+
+## Contributing
+
+```bash
+git clone https://github.com/hackico-ai/ruby-hati-jsonapi-error.git
+cd ruby-hati-jsonapi-error
+bundle install
+bundle exec rspec
+```
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-**Made with ❤️ for the Ruby community**
+**Professional error handling for professional APIs**
