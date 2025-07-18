@@ -187,7 +187,7 @@ resolver = HatiJsonapiError::Resolver.new(errors)
 render json: resolver.to_json, status: resolver.status
 ```
 
-### Controller Integration
+## Controller Integration
 
 ```ruby
 class ApiController < ApplicationController
@@ -242,6 +242,33 @@ end
 
 # Usage
 raise PaymentRequiredError.new(amount: 29.99)
+```
+
+## Functional Programming Integration
+
+Perfect for functional programming patterns with [hati-operation gem](https://github.com/hackico-ai/ruby-hati-operation):
+
+```ruby
+require 'hati_operation'
+
+class Api::User::CreateOperation < Hati::Operation
+  ApiErr = HatiJsonapiError::Helpers::ApiErr.new
+
+  def call(params)
+    user_params = step validate_params(params), err: ApiErr[422]
+    user = step create_user(user_params),       err: ApiErr[409]
+    profile = step create_profile(user),        err: ApiErr[503]
+
+    Success(profile)
+  end
+
+  private
+
+  def validate_params(params)
+    return Failure('Invalid parameters') unless params[:name]
+    Success(params)
+  end
+end
 ```
 
 ## Configuration
