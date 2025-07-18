@@ -145,7 +145,7 @@ raise HatiJsonapiError::Unauthorized.new
 raise HatiJsonapiError::NotFound.new
 
 # By status code
-api_err = HatiJsonapiError::Helpers::ApiErr.new
+api_err = HatiJsonapiError::Helpers::ApiErr
 raise api_err[404]
 
 # By error code
@@ -252,7 +252,7 @@ Perfect for functional programming patterns with [hati-operation gem](https://gi
 require 'hati_operation'
 
 class Api::User::CreateOperation < Hati::Operation
-  ApiErr = HatiJsonapiError::Helpers::ApiErr.new
+  ApiErr = HatiJsonapiError::Helpers::ApiErr
 
   def call(params)
     user_params = step validate_params(params), err: ApiErr[422]

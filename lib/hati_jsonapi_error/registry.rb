@@ -43,7 +43,10 @@ module HatiJsonapiError
 
       def fetch_error(error)
         err = HatiJsonapiError::Kigen.fetch_err(error)
-        raise "Error #{error} definition not found in lib/hati_jsonapi_error/api_error/error_const.rb" unless err
+        unless err
+          msg = "Error #{error} definition not found in lib/hati_jsonapi_error/api_error/error_const.rb"
+          raise HatiJsonapiError::Errors::NotDefinedErrorClassError, msg
+        end
 
         err
       end

@@ -64,16 +64,20 @@ RSpec.describe HatiJsonapiError::Helpers do
     end
 
     context 'with invalid error' do
-      it 'raises ArgumentError for non-BaseError class' do
-        message = 'Error must be a BaseError class or instance'
+      it 'raises HelpersRenderError for non-BaseError class' do
+        message = 'Supported only explicit type of HatiJsonapiError::BaseError, got: StandardError'
 
-        expect { instance.render_error(StandardError) }.to raise_error(ArgumentError, message)
+        expect do
+          instance.render_error(StandardError)
+        end.to raise_error(HatiJsonapiError::Errors::HelpersRenderError, message)
       end
 
-      it 'raises ArgumentError for non-BaseError instance' do
-        message = 'Error must be a BaseError class or instance'
+      it 'raises HelpersRenderError for non-BaseError instance' do
+        message = 'Supported only explicit type of HatiJsonapiError::BaseError, got: StandardError'
 
-        expect { instance.render_error(StandardError.new) }.to raise_error(ArgumentError, message)
+        expect do
+          instance.render_error(StandardError.new)
+        end.to raise_error(HatiJsonapiError::Errors::HelpersRenderError, message)
       end
     end
   end
@@ -126,14 +130,16 @@ RSpec.describe HatiJsonapiError::Helpers do
       HatiJsonapiError::Registry.instance_variable_set(:@error_map, {})
       HatiJsonapiError::Registry.instance_variable_set(:@fallback, nil)
 
-      message = 'Used handle_error(HatiJsonapiError::Helpers ) but no mapping found! No default unexpected error set'
+      message = 'Used handle_error but no mapping of default error set'
 
-      expect { instance.handle_error(StandardError.new) }.to raise_error(message)
+      expect do
+        instance.handle_error(StandardError.new)
+      end.to raise_error(HatiJsonapiError::Errors::HelpersHandleError, message)
     end
   end
 
   describe HatiJsonapiError::Helpers::ApiErr do
-    subject(:api_err) { described_class.new }
+    subject(:api_err) { described_class }
 
     before { HatiJsonapiError::Kigen.load_errors! }
 
@@ -146,16 +152,16 @@ RSpec.describe HatiJsonapiError::Helpers do
     end
 
     it 'raises error for unknown code' do
-      message = 'Error unknown not found'
+      message = 'Error unknown not defined on load_errors!. Check kigen.rb and api_error/error_const.rb'
 
-      expect { api_err[:unknown] }.to raise_error(message)
+      expect { api_err[:unknown] }.to raise_error(HatiJsonapiError::Errors::NotDefinedErrorClassError, message)
     end
 
     it 'raises error when Kigen not loaded' do
       allow(HatiJsonapiError::Kigen).to receive(:loaded?).and_return(false)
       message = 'HatiJsonapiError::Kigen not loaded'
 
-      expect { api_err[404] }.to raise_error(message)
+      expect { api_err[404] }.to raise_error(HatiJsonapiError::Errors::NotLoadedError, message)
     end
   end
 end

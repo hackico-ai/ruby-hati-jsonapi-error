@@ -7,43 +7,71 @@ module HatiJsonapiError
 
   # This module contains helper methods for rendering errors in a JSON API format.
   module Helpers
+    HatiErrs = HatiJsonapiError::Errors
+
     def render_error(error, status: nil, short: false)
       error_instance = error.is_a?(Class) ? error.new : error
 
       unless error_instance.class <= HatiJsonapiError::BaseError
-        raise ArgumentError, 'Error must be a BaseError class or instance'
+        msg = "Supported only explicit type of HatiJsonapiError::BaseError, got: #{error_instance.class.name}"
+        raise HatiErrs::HelpersRenderError, msg
       end
 
       resolver = HatiJsonapiError::Resolver.new(error_instance)
-      raise 'Render not defined' unless defined?(render)
+
+      unless defined?(render)
+        msg = 'Render not defined'
+        raise HatiErrs::HelpersRenderError, msg
+      end
 
       render json: resolver.to_json(short: short), status: status || resolver.status
     end
 
-    # add default even if not configured
-    def handle_error(error)
+    # with_original: oneOf: [false, true, :full_trace]
+    def handle_error(error, with_original: false)
       error_class = error if error.class <= HatiJsonapiError::BaseError
       error_class ||= HatiJsonapiError::Registry.lookup_error(error)
 
       unless error_class
-        raise 'Used handle_error(HatiJsonapiError::Helpers ) but no mapping found! No default unexpected error set'
+        msg = 'Used handle_error but no mapping of default error set'
+        raise HatiErrs::HelpersHandleError, msg
       end
 
-      render_error(error_class)
+      # Fix: if error_class is already an instance, use it directly, otherwise create new instance
+      api_err = error_class.is_a?(Class) ? error_class.new : error_class
+      if with_original
+        api_err.meta = {
+          original_error: error.class,
+          trace: error.backtrace[0],
+          message: error.message
+        }
+        api_err.meta.merge!(backtrace: error.backtrace.join("\n")) if with_original == :full_trace
+      end
+
+      render_error(api_err)
     end
 
     # shorthand for API errors
     # raise ApiErr[404] # => ApiError::NotFound
     # raise ApiErr[:not_found] # => ApiError::NotFound
     class ApiErr
-      def [](error)
-        call(error)
-      end
+      class << self
+        def [](error)
+          call(error)
+        end
 
-      def call(error)
-        raise 'HatiJsonapiError::Kigen not loaded' unless HatiJsonapiError::Kigen.loaded?
+        def call(error)
+          raise HatiErrs::NotLoadedError unless HatiJsonapiError::Kigen.loaded?
 
-        HatiJsonapiError::Kigen.fetch_err(error) || raise("Error #{error} not found")
+          err = HatiJsonapiError::Kigen.fetch_err(error)
+
+          unless err
+            msg = "Error #{error} not defined on load_errors!. Check kigen.rb and api_error/error_const.rb"
+            raise HatiErrs::NotDefinedErrorClassError, msg
+          end
+
+          err
+        end
       end
     end
   end

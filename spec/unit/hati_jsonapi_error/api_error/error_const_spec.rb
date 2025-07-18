@@ -172,17 +172,12 @@ RSpec.describe HatiJsonapiError do
 
       it 'defines UnprocessableEntity (422) correctly' do
         unprocessable = described_class::CLIENT[422]
-        expected_attrs = {
+
+        expect(unprocessable).to eq(
           name: 'UnprocessableEntity',
           code: :unprocessable_entity,
           message: 'Unprocessable Entity'
-        }
-
-        aggregate_failures 'unprocessable entity' do
-          expect(unprocessable[:name]).to eq(expected_attrs[:name])
-          expect(unprocessable[:code]).to eq(expected_attrs[:code])
-          expect(unprocessable[:message]).to eq(expected_attrs[:message])
-        end
+        )
       end
     end
   end
