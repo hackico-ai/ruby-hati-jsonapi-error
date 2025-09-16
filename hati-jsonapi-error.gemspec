@@ -8,8 +8,8 @@ require 'hati_jsonapi_error/version'
 Gem::Specification.new do |spec|
   spec.name    = 'hati-jsonapi-error'
   spec.version = HatiJsonapiError::VERSION
-  spec.authors = ['Marie Giy', 'Yuri Gi']
-  spec.email   = %w[giy.mariya@gmail.com yurigi.pro@gmail.com]
+  spec.authors = ['Marie Giy']
+  spec.email   = %w[giy.mariya@gmail.com]
   spec.license = 'MIT'
 
   spec.summary     = 'Standardized JSON: API-compliant error responses made easy for your Web API.'
