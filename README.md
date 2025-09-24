@@ -9,6 +9,34 @@
 
 Transform inconsistent error handling into standardized, traceable responses. Built for Ruby applications requiring enterprise-grade error management.
 
+## Table of Contents
+
+- [Why Standardized Error Handling Matters](#why-standardized-error-handling-matters)
+  - [The Problem: Inconsistent Error Responses](#the-problem-inconsistent-error-responses)
+  - [The Impact](#the-impact)
+  - [The Solution: JSON:API Standard](#the-solution-jsonapi-standard)
+- [✨ Features](#-features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [1. Configuration](#1-configuration)
+  - [2. Basic Usage](#2-basic-usage)
+- [Usage Examples](#usage-examples)
+  - [Basic Error Handling](#basic-error-handling)
+  - [Rich Error Context](#rich-error-context)
+  - [Multiple Validation Errors](#multiple-validation-errors)
+- [Controller Integration](#controller-integration)
+  - [Custom Error Classes](#custom-error-classes)
+- [Functional Programming Integration](#functional-programming-integration)
+- [Configuration](#configuration)
+  - [Error Mapping](#error-mapping)
+- [Available Error Classes](#available-error-classes)
+- [Testing](#testing)
+  - [RSpec Integration](#rspec-integration)
+  - [Unit Testing](#unit-testing)
+- [Benefits](#benefits)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Why Standardized Error Handling Matters
 
 ### The Problem: Inconsistent Error Responses
