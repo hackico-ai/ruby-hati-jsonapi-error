@@ -401,6 +401,10 @@ end
 - Consistent error analysis
 - Simplified documentation
 
+## Authors
+
+- **Mariya Giy** ([@MarieGiy](https://github.com/MarieGiy))
+
 ## Contributing
 
 ```bash
